@@ -12,7 +12,7 @@
     <form action="{{ route('upload-example') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="file" name="avatar">
-        <button type="submit">Upload</button>
+        <button type="submit">Upload File</button>
     </form>
 </body>
 

@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Exports\EmployeesExport;
 use App\Models\Position;
 use App\Models\Employee;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class EmployeeController extends Controller
 {
@@ -18,15 +23,13 @@ class EmployeeController extends Controller
     public function index()
     {
         $pageTitle = 'Employee List';
-        return view('employee.index', compact('pageTitle'));
-        // // ELOQUENT
-        // $employees = Employee::all();
-
-        // return view('employee.index', [
-        //     'pageTitle' => $pageTitle,
-        //     'employees' => $employees
-        // ]);
-    }
+        confirmDelete();
+        $positions = Position::all();
+        return view('employee.index',[
+               'pageTitle' => $pageTitle, 
+               'positions' => $positions
+        ]);
+    }   
 
     /**
      * Show the form for creating a new resource.
@@ -88,6 +91,7 @@ class EmployeeController extends Controller
         }
 
         $employee->save();
+        Alert::success('Added Successfully', 'Employee Data Added Successfully.');
         return redirect()->route('employees.index');
     }
 
@@ -211,6 +215,7 @@ class EmployeeController extends Controller
             $employee->encrypted_filename = $encryptedFilename;
         }
         $employee->save();
+        Alert::success('Changed Successfully', 'Employee Data Changed Successfully.');
         return redirect()->route('employees.index');
     }
     // public function edit(string $id)
@@ -262,13 +267,14 @@ class EmployeeController extends Controller
     {
         // ELOQUENT
         $employee = Employee::find($id);
- 
+
         //menghaous cv
-        if ($employee->encrypted_filename){
+        if ($employee->encrypted_filename) {
             Storage::delete('public/files/' . $employee->encrypted_filename);
         }
 
         $employee->delete();
+        Alert::success('Deleted Successfully', 'Employee Data Deleted Successfully.');
         return redirect()->route('employees.index');
     }
 
@@ -300,4 +306,18 @@ class EmployeeController extends Controller
                 ->toJson();
         }
     }
+    public function exportExcel()
+    {
+        return Excel::download(new EmployeesExport, 'employees.xlsx');
+    }
+
+    public function exportPdf()
+    {
+        $employees = Employee::all();
+
+        $pdf = PDF::loadView('employee.export_pdf', compact('employee'));
+
+        return $pdf->download('employees.pdf');
+    }
+
 }
